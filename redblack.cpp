@@ -28,12 +28,15 @@ private:
   tree_t *findmin(tree_t *tree);
   tree_t *findmax(tree_t *tree);
   void validate(tree_t *tree, int numblacks);
+  void fixcolor(tree_t *target);
   void check(tree_t *child);
   int getnumblacks(void);
 
   /* rotation */
   void rotateR(tree_t *tree);
   void rotateL(tree_t *tree);
+
+  int getcolor(tree_t *tree) { return (((tree == NULL) || (tree -> color == black))? black : red); }
   
 public:
   /* construction and destruction */
@@ -307,7 +310,90 @@ void binarytree::add(int value) {
   validate(root, 0);
 }
 
-/* not used but deletion */
+/* fix color when black is deleted */
+void binarytree::fixcolor(tree_t *target) {
+  tree_t *sibling;
+  
+  /* https://qiita.com/curoa/items/fee1b53ec629d1978a99 */
+
+  /* While loop */
+  while (target != root && (getcolor(target) == black)) {
+    
+    if (target == target -> parent -> left) {
+      /* Left */
+      sibling = target -> parent -> right;
+      
+      if ((getcolor(target -> parent) == red) && (getcolor(sibling) == black) && (getcolor(sibling -> left) == black) && (getcolor(sibling -> right) == black)) {
+	target -> parent -> color = black;
+	sibling -> color = red;
+	/* quit */
+	target = root;
+      } else if (((getcolor(sibling) == black) && (getcolor(sibling -> left) == red) && (getcolor(sibling -> right) == black)) ||
+		 ((getcolor(sibling) == black) && (getcolor(sibling -> right) == red))) { 
+
+	if ((getcolor(sibling) == black) && (getcolor(sibling -> left) == red ) && (getcolor(sibling -> right) == black)) {
+	  sibling -> left -> color = black;
+	  sibling -> color = red;
+	  rotateR(sibling);
+	  sibling = target -> parent -> right;
+	}
+	sibling -> color = target -> parent -> color;
+	target -> parent -> color = black;
+	sibling -> right -> color = black;
+	rotateL(target -> parent);
+	/* quit */
+	target = root;
+      } else if ((getcolor(target -> parent) == black) && (getcolor(sibling) == red) && (getcolor(sibling -> left) == black) && (getcolor(sibling -> right) == black)) {
+	target -> parent -> color = red;
+	sibling -> color = black;
+	rotateL(target -> parent);
+      } else if ((getcolor(target -> parent) == black) && (getcolor(sibling) == black) && (getcolor(sibling -> left) == black) && (getcolor(sibling -> right) == black)) {
+	sibling -> color = red;
+	target = target -> parent;
+      } else {
+	cout << "Something wrong." << endl;
+      }
+    } else {
+      /* Right */
+      sibling = target -> parent -> left;
+      
+      if ((getcolor(target -> parent) == red) && (getcolor(sibling) == black) && (getcolor(sibling -> right) == black) && (getcolor(sibling -> left) == black)) {
+	target -> parent -> color = black;
+	sibling -> color = red;
+	/* quit */
+	target = root;
+      } else if (((getcolor(sibling) == black) && (getcolor(sibling -> right) == red ) && (getcolor(sibling -> left) == black)) ||
+		 ((getcolor(sibling) == black) && (getcolor(sibling -> left) == red))) { 
+
+	if ((getcolor(sibling) == black) && (getcolor(sibling -> right) == red ) && (getcolor(sibling -> left) == black)) {
+	  sibling -> right -> color = black;
+	  sibling -> color = red;
+	  rotateL(sibling);
+	  sibling = target -> parent -> left;
+	}
+	sibling -> color = target -> parent -> color;
+	target -> parent -> color = black;
+	sibling -> left -> color = black;
+	rotateR(target -> parent);
+	/* quit */
+	target = root;
+      } else if ((getcolor(target -> parent) == black) && (getcolor(sibling) == red) && (getcolor(sibling -> right) == black) && (getcolor(sibling -> left) == black)) {
+	target -> parent -> color = red;
+	sibling -> color = black;
+	rotateR(target -> parent);
+      } else if ((getcolor(target -> parent) == black) && (getcolor(sibling) == black) && (getcolor(sibling -> right) == black) && (getcolor(sibling -> left) == black)) {
+	sibling -> color = red;
+	target = target -> parent;
+      } else {
+	cout << "Something wrong." << endl;
+      }
+    }
+  }
+
+  target -> color = black;
+}
+
+/* when the node is deleted */
 void binarytree::del(int value) {
   tree_t *cur = root;
   tree_t *parent, *maxtree;
