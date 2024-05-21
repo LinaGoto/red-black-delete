@@ -395,94 +395,73 @@ void binarytree::fixcolor(tree_t *target) {
 
 /* when the node is deleted */
 void binarytree::del(int value) {
-  tree_t *cur = root;
-  tree_t *parent, *maxtree;
+tree_t *target = root;
+  tree_t *parent, *replace;
+  int v;
   
   /* find the poiter */
-  cur = findtree(value);
+  target = findtree(value);
 
   /* value was not found */
-  if (cur == NULL) return;
+  if (target == NULL){
+  cout << "deleting value dose not exist" << endl;
+  return;
+  }
+  cout << "deleted" << endl;
+  /* Retrieve parent */
+  parent = target -> parent;
 
-  if (cur == root) {
-    /* if it's root */
-    if ((cur -> left == NULL) && (cur -> right == NULL)) {
-      /* no leaves, simply delete it */
+  if ((target -> left == NULL) && (target -> right == NULL)) {
+    /* no leaves, simply delete it */
+    if (parent == NULL) {
       root = NULL;
-    } else if (cur -> right == NULL) {
-      /* left only */
-      root  = cur -> left;
-      cur -> left -> parent = NULL;
-    } else if (cur -> left == NULL) {
-      /* right only */
-      root  = cur -> right;
-      cur -> right -> parent = NULL;
     } else {
-      /* two leaves */
-      /* find the maximum tree */
-      maxtree = findmax(cur -> left);
-
-      /* max tree is next pointer */
-      if (cur -> left == maxtree) {
-	maxtree -> right = cur -> right;
-	if (maxtree -> right != NULL) maxtree -> right -> parent = maxtree;
-	maxtree -> parent = NULL;
-      } else {
-	maxtree -> parent -> right = maxtree -> left;
-	if (maxtree -> left != NULL) maxtree -> left -> parent = maxtree -> parent;
-	maxtree -> left = cur -> left;
-	if (cur -> left != NULL) cur -> left -> parent = maxtree;
-	maxtree -> right = cur -> right;
-	if (cur -> right != NULL) cur -> right -> parent = maxtree;
-	maxtree -> parent = NULL;
-      }
-      root = maxtree;
+      if ((getcolor(target) == black)) fixcolor(target);
+      if (target == parent -> left) parent -> left = NULL; else parent -> right = NULL;
     }
+  } else if (target -> right == NULL) {
+    /* left only */
+    if (parent == NULL) {
+      root = target -> left;
+      root -> color = black;
+    } else {
+      if ((getcolor(target) == black)) fixcolor(target);
+      if (target == parent -> left) parent -> left = target -> left; else parent -> right = target -> left;
+    }
+    target -> left -> parent = parent;
+  } else if (target -> left == NULL) {
+    /* right only */
+    if (parent == NULL) {
+      root = target -> right;
+      root -> color = black;
+    } else {
+      if ((getcolor(target) == black)) fixcolor(target);
+      if (target == parent -> left) parent -> left = target -> right; else parent -> right = target -> right;
+    }
+    target -> right -> parent = parent;
   } else {
-    /* if not root, find parent */
-    parent = cur -> parent;
-
-    if ((cur -> left == NULL) && (cur -> right == NULL)) {
-      /* no leaves, simply delete it */
-      if (value < parent -> value) parent -> left = NULL; else parent -> right = NULL;
-    } else if (cur -> right == NULL) {
-      /* left only */
-      if (value < parent -> value) parent -> left = cur -> left; else parent -> right = cur -> left;
-      cur -> left -> parent = parent;
-    } else if (cur -> left == NULL) {
-      /* right only */
-      if (value < parent -> value) parent -> left = cur -> right; else parent -> right = cur -> right;
-      cur -> right -> parent = parent;
-    } else {
-      /* two leaves */
-      /* find the maximum tree */
-      maxtree = findmax(cur -> left);
-
-      /* max tree is next pointer */
-      if (cur -> left == maxtree) {
-	maxtree -> right = cur -> right;
-	if (maxtree -> right != NULL) maxtree -> right -> parent = maxtree;
-	maxtree -> parent = parent;
-      } else {
-	maxtree -> parent -> right = maxtree -> left;
-	if (maxtree -> left != NULL) maxtree -> left -> parent = maxtree -> parent;
-	maxtree -> left  = cur -> left;
-	if (cur -> left != NULL) cur -> left -> parent = maxtree;
-	maxtree -> right = cur -> right;
-	if (cur -> right != NULL) cur -> right -> parent = maxtree;
-	maxtree -> parent = parent;
-      }
-      
-      if (value < parent -> value) parent -> left = maxtree; else parent -> right = maxtree;
-    }
+    /* two leaves */
+    /* find the minimum value node */
+    replace = findmin(target -> right);
+    
+    /* exchange value */
+    v = target -> value;
+    target  -> value = replace -> value;
+    replace -> value = v;
+    
+    /* retarget */
+    target = replace;
+    parent = target -> parent;
+    
+    if ((getcolor(target) == black)) fixcolor(target);
+    if (target == parent -> left) parent -> left = target -> right; else parent -> right = target -> right;
+    if (target -> right != NULL) target -> right -> parent = parent;
   }
   
-  delete cur;
-  cout << "   ======= Deleted " << value << " =======" << endl;
-  show();
+  delete target;
+
   validate(root, 0);
 }
-
 static int getparent(int i) { return (i - 1) / 2; }
 static int getwidth (int i) { return (1 << i); }
 
@@ -614,7 +593,7 @@ int main(void) {
   while (1){
     /* input delete or search */
     char input[10];
-    cout << "input (i) or print (p)?" << endl;
+    cout << "input (i) or delete (d) or search (s) or print (p)?" << endl;
     cin.get (input,10);
     cin.get();
 
@@ -640,6 +619,37 @@ int main(void) {
       }
     }
 
+    /*delete*/
+    if (input[0] == 'd' || input[0] == 'd'){
+      input [0] = 'a';
+
+      int value = 0;
+      cout << "input value to delete: ";
+      cin >> value;
+      cin.get();
+      
+      binarytree.del(value);
+      value = 0;
+    }
+    
+    /*search*/
+    if (input[0] == 's' || input[0] == 's'){
+      input [0] = 'a';
+
+      int value = 0;
+      cout << "input value to search: ";
+      cin >> value;
+      cin.get();
+      
+      if (binarytree.search( value ) != 0){
+	cout << "the number exists in the tree" << endl;
+      }else{
+	cout << "the number does not exist in the tree" << endl;
+      }
+      value = 0;
+    }
+    
+    /*print*/
     if(input[0] == 'p' || input[0] == 'P'){
       input[0] = 'a';
        binarytree.show();
